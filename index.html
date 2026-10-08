@@ -245,6 +245,7 @@ if(!m.quick||!ids.includes(m.quick)){const n=pk(g?/flash-lite/:cl?/haiku/:/mini/
 if(!m.default||!ids.includes(m.default)){const n=pk(g?/flash/:cl?/sonnet/:/^openai\/gpt-4o$/,g?"gemini-flash-latest":null);if(m.default)ch.push(m.default+"→"+n);m.default=n}
 return{n:L.length,ch}}
 function cfgLabel(){const c=S.cfg,t=c.key?PROV[c.provider].name.split("（")[0]+" ✓":"⚠ 未設定";["#cfgst","#cfgst2"].forEach(x=>{const e=$(x);if(e)e.textContent=t})}
+const hintOf=e=>/denied access|PERMISSION_DENIED|leaked|suspended|disabled/i.test(String(e&&e.message))?"。這是服務商端的限制，不是網頁或金鑰格式問題：請到該服務商後台查看這把金鑰與專案的狀態（可能被停用、停權或所在地區不支援），必要時用新專案重新建立金鑰，或改用其他服務商":"";
 async function openCfg(msg){while(1){const c=S.cfg,q=v=>String(v||"").replace(/"/g,"&quot;");
 const h=`<h3>⚙ AI 設定</h3>${msg?`<div style="font-size:13px;margin:4px 0;color:${msg.ok?"var(--ac)":"var(--er)"}">${msg.ok?"✅ ":"❌ "}${esc(msg.t)}</div>`:""}<div style="font-size:12px" class="mu">金鑰只存在這台裝置的瀏覽器（本站沒有伺服器可以存），生成時由你的瀏覽器直接送給你選的服務商，費用算在你自己的帳號；按「清除金鑰」或清除瀏覽器資料即可刪除。請使用有額度上限的金鑰；公用電腦請不要勾選「記住」。</div>
 <div class="row"><label>AI 服務</label><select id="cp">${Object.entries(PROV).map(([k,v])=>`<option value="${k}" ${k===c.provider?"selected":""}>${v.name}</option>`).join("")}</select><small id="cph" class="mu">${PROV[c.provider].hint}</small></div>
@@ -256,8 +257,8 @@ $("#cp").onchange=()=>{const p=$("#cp").value;$("#cph").textContent=PROV[p].hint
 const v=await vP;if(v==="x")return;if(v==="clr"){S.cfg.key="";saveCfg();cfgLabel();S.noAI=null;return}
 const p=$("#cp").value;c.provider=p;c.key=$("#ck").value.trim();c.remember=$("#cr").checked;c.models[p]={quick:$("#cmq").value.trim(),default:$("#cmd").value.trim()};S.noAI=null;saveCfg();cfgLabel();
 if(v==="save")return;
-if(v==="fetch"){try{if(!c.key)throw{code:"no_key"};const r=await refreshModels(c);saveCfg();msg={ok:true,t:"已取得 "+r.n+" 個可用模型"+(r.ch.length?"；已自動替換失效模型："+r.ch.join("、"):"")}}catch(e){msg={ok:false,t:codeMsg(e)+(e&&e.message?"｜"+e.message:"")}}continue}
-msg=null;try{if(!c.key)throw{code:"no_key"};try{await refreshModels(c);saveCfg()}catch(e){}await callProv(c,c.models[p].quick||PROV[p].models.quick,'請只回覆這段 JSON：{"ok":true}',new AbortController().signal);msg={ok:true,t:"連線成功，金鑰與模型可用（已儲存）"}}catch(e){msg={ok:false,t:codeMsg(e)+(e&&e.message&&e.code!=="no_key"?"｜"+e.message:"")+(e&&e.code==="bad_request"?"。可按「🔄 取得可用模型」更新清單":"")}}}}
+if(v==="fetch"){try{if(!c.key)throw{code:"no_key"};const r=await refreshModels(c);saveCfg();msg={ok:true,t:"已取得 "+r.n+" 個可用模型"+(r.ch.length?"；已自動替換失效模型："+r.ch.join("、"):"")}}catch(e){msg={ok:false,t:codeMsg(e)+(e&&e.message?"｜"+e.message:"")+hintOf(e)}}continue}
+msg=null;try{if(!c.key)throw{code:"no_key"};try{await refreshModels(c);saveCfg()}catch(e){}await callProv(c,c.models[p].quick||PROV[p].models.quick,'請只回覆這段 JSON：{"ok":true}',new AbortController().signal);msg={ok:true,t:"連線成功，金鑰與模型可用（已儲存）"}}catch(e){msg={ok:false,t:codeMsg(e)+(e&&e.message&&e.code!=="no_key"?"｜"+e.message:"")+(e&&e.code==="bad_request"?"。可按「🔄 取得可用模型」更新清單":"")+hintOf(e)}}}}
 $("#cfgb").onclick=()=>openCfg();$("#cfgb2").onclick=()=>openCfg();cfgLabel();
 const keyOf=x=>(x.fix&&x.fix.field)||x.field;
 async function review(n){S.ign=new Set();S.adopted=[];S.skipNote=null;const hist=[],q=s=>esc(s).replace(/"/g,"&quot;"),nm=k=>FD.find(f=>f[0]===k)[1],snap=()=>JSON.parse(JSON.stringify(S.f));let cf=null,th="",skip=false,d2=false;
